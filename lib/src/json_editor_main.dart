@@ -21,57 +21,77 @@ class JsonEditor extends StatefulWidget {
       this.jsonObj,
       this.enabled = true,
       this.openDebug = false,
-      this.onValueChanged})
+      this.onValueChanged,
+      this.onFinishEditing,
+      this.onStartEditing})
       : assert(jsonObj == null || jsonObj is Map || jsonObj is List),
         super(key: key) {
     initialLogger(openDebug: openDebug);
   }
 
-  factory JsonEditor.string(
-          {Key? key,
-          String? jsonString,
-          bool enabled = true,
-          bool openDebug = false,
-          ValueChanged<JsonElement>? onValueChanged}) =>
+  factory JsonEditor.string({
+    Key? key,
+    String? jsonString,
+    bool enabled = true,
+    bool openDebug = false,
+    ValueChanged<JsonElement>? onValueChanged,
+    Function()? onStartEditing,
+    Function()? onFinishEditing,
+  }) =>
       JsonEditor._(
-          key: key,
-          jsonString: jsonString,
-          enabled: enabled,
-          openDebug: openDebug,
-          onValueChanged: onValueChanged);
+        key: key,
+        jsonString: jsonString,
+        enabled: enabled,
+        openDebug: openDebug,
+        onValueChanged: onValueChanged,
+        onFinishEditing: onFinishEditing,
+        onStartEditing: onStartEditing,
+      );
 
-  factory JsonEditor.object(
-          {Key? key,
-          Object? object,
-          bool enabled = true,
-          bool openDebug = false,
-          ValueChanged<JsonElement>? onValueChanged}) =>
+  factory JsonEditor.object({
+    Key? key,
+    Object? object,
+    bool enabled = true,
+    bool openDebug = false,
+    ValueChanged<JsonElement>? onValueChanged,
+    Function()? onStartEditing,
+    Function()? onFinishEditing,
+  }) =>
       JsonEditor._(
         key: key,
         jsonObj: object,
         enabled: enabled,
         openDebug: openDebug,
         onValueChanged: onValueChanged,
+        onFinishEditing: onFinishEditing,
+        onStartEditing: onStartEditing,
       );
 
-  factory JsonEditor.element(
-          {Key? key,
-          JsonElement? element,
-          bool enabled = true,
-          bool openDebug = false,
-          ValueChanged<JsonElement>? onValueChanged}) =>
+  factory JsonEditor.element({
+    Key? key,
+    JsonElement? element,
+    bool enabled = true,
+    bool openDebug = false,
+    ValueChanged<JsonElement>? onValueChanged,
+    Function()? onStartEditing,
+    Function()? onFinishEditing,
+  }) =>
       JsonEditor._(
         key: key,
         jsonString: element?.toString(),
         enabled: enabled,
         openDebug: openDebug,
         onValueChanged: onValueChanged,
+        onFinishEditing: onFinishEditing,
+        onStartEditing: onStartEditing,
       );
 
   final String? jsonString;
   final Object? jsonObj;
   final bool enabled;
   final bool openDebug;
+  final Function()? onStartEditing;
+  final Function()? onFinishEditing;
 
   /// Output the decoded json object.
   final ValueChanged<JsonElement>? onValueChanged;
@@ -217,10 +237,12 @@ class _JsonEditorState extends State<JsonEditor> {
         maxLines: null,
         minLines: null,
         onChanged: (s) {
+          widget.onStartEditing?.call();
           if (_currentKeyEvent?.logicalKey == LogicalKeyboardKey.enter) {
             // Enter key
             var editingOffset = _editController.selection.baseOffset;
             if (editingOffset == 0) {
+              widget.onFinishEditing?.call();
               return;
             }
             _enterFormat();
@@ -239,6 +261,7 @@ class _JsonEditorState extends State<JsonEditor> {
           //Analyze json syntax
           _analyze();
           _undoRedoInput(s);
+          widget.onFinishEditing?.call();
         },
       ),
     );
